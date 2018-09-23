@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	sh = (root.winfo_screenheight() - 400)/2
 
 	root.geometry('%dx%d+%d+%d' % (700,400,sw,sh))
-	root.protocol("WM_DELETE_WINDOW", quit)
+	root.protocol("WM_DELETE_WINDOW", sys.exit)
 
 	root.grid_rowconfigure(0,pad=0)
 	root.grid_columnconfigure(0,pad=0)
