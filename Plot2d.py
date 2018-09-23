@@ -1,5 +1,5 @@
 # Protocol, Plots and utils imports
-import MyGUICommons, Novonix_Protocol, BaSyTec_Protocol, Defs, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate
+import MyGUICommons, Novonix_Protocol, BaSyTec_Protocol, Defs, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math
 from MyGUICommons import exit
 from Novonix_Protocol import *
 from BaSyTec_Protocol import *
@@ -142,15 +142,24 @@ class Plot2d():
 
 
 
-	def __smooth__(self, a, WSZ):
-    # a: NumPy 1-D array containing the data to be smoothed
-    # WSZ: smoothing window size needs, which must be odd number,
-    # as in the original MATLAB implementation
-		out0 = numpy.convolve(a,numpy.ones(WSZ,dtype=int),'valid')/WSZ    
-		r = numpy.arange(1,WSZ-1,2)
-		start = numpy.cumsum(a[:WSZ-1])[::2]/r
-		stop = (numpy.cumsum(a[:-WSZ:-1])[::2]/r)[::-1]
-		return numpy.concatenate((  start , out0, stop  ))
+	def __average__(self, V, window):
+		return sum(V)/window
+
+	def __delta__(self, V, cond, window):
+		if cond == 'f':
+			return self.__average__(V[window+1:], window)-self.__average__(V[window-math.ceil(window/2):window+math.ceil(window/2)], window)
+		elif cond == 'b':
+			return self.__average__(V[window-math.ceil(window/2):window+math.ceil(window/2)], window) - self.__average__(V[:window-1], window)
+
+	def __differentiate__(self, V, Q, window):
+		dVdQ = []
+		plotx = []
+
+		for i in range(window, len(V)-window-1, window):
+			dVdQ.append(((self.__delta__(V[i-window:i+window+1], 'f', window)/self.__delta__(Q[i-window:i+window+1], 'f', window)) + (self.__delta__(V[i-window:i+window+1], 'b', window)/self.__delta__(Q[i-window:i+window+1],'b', window)))*(1/2))
+			plotx.append(Q[i])
+
+		return dVdQ, plotx
 
 	def __plotDVA__(self,file,dest,plottitle,plotx_title,ploty_title):
 		print('DVA')
@@ -181,14 +190,16 @@ class Plot2d():
 		while(re.match('^$', line ) is None):
 			# a. tokenizing line
 			tokens = line.split(',')
+			#print('while de fora')
 
-			while(re.match('^$', line ) is None and cycle == abs(int(tokens[1]))):
+			while(re.match('^$', line ) is None and cycle ==  abs(int(tokens[1]))):
 				# b. storing the information
+				#print('while de dentro')
 				valueQ = float(tokens[7]) #capacitancia
 				valueV = float(tokens[6]) #potencial
 
 				
-				if((-1)*int(tokens[1]) > 0 and valueQ != 0 and valueV != 0):
+				if(int(tokens[1]) < 0 and valueQ != 0 and valueV != 0):
 					Q.append(valueQ)
 					V.append(valueV)
 
@@ -200,79 +211,29 @@ class Plot2d():
 			cycle = cycle + 1
 			time = []
 
-			if(len(Q) != 0 and len(V) != 0 and any([t != Q[0] for t in Q]) ):
+			#Test if the vector Q and V are not empty
+			if(len(Q) > 3 and len(V) > 3 and any([t != Q[0] for t in Q]) ):
 				# e. Differentiating dQ/dV
-
-				#i. tmp_U = smooth(readings.U(bool_0A25),round(sum(bool_0A25)/50));
-				V = self.__smooth__(V,round(len(V)/50) + 1 if ((round(len(V)/50) % 2) == 0) else round(len(V)/50))
-
-				#ii. tmp_Ah = tmp_Ah - min(tmp_Ah)----OK
-				minQ = min(Q)
-				for i in range (0, len(Q)):
-					Q[i] = Q[i] - minQ
-
-				#iii. tmp_Ah(2)=(tmp_Ah(3)-tmp_Ah(1))/2;---???????
-				#Q[3] = (Q[3] - Q[1])/2.0
-
-				#iv. dQ = max(tmp_Ah) / 500;----OK
-				dQ = max(Q)/500
-
-				#v. dV = interp1(tmp_Ah, tmp_U, tmp_Ah+dQ, 'pchip') - tmp_U; 
-				temp = []
-				for i in range (0, len(Q)):
-					temp.append(Q[i]+dQ) # temp_Ah + dQ ----OK
-
-				#ordenation
-				aux_sort = []
-				for i in range(0, len(Q)):
-					aux_sort.append([Q[i], V[i]])
-
-				aux_sort = sorted(aux_sort)
-				for i in range(0, len(aux_sort)):
-					Q[i] = aux_sort[i][0]
-					V[i] = aux_sort[i][1]
-
-				aux = scipy.interpolate.pchip_interpolate(Q, V, temp) #pchip interpolation
-
-				dV = []
-				for i in range(0, len(aux)):
-					dV.append(aux[i] - V[i]) #interpolation - V
-
-				#dVdQ = dV/dQ;
-				dVdQ = []
-				for i in range(0, len(dV)):
-					dVdQ.append(dV[i]/dQ)
-
-				#vi. plot_x = (tmp_Ah+dQ/2)
 				plotx = []
-				for i in range(0, len(Q)):
-					plotx.append((Q[i]+dQ)/2)
-
-				#for i in range(1,len(dVdQ)+1):
-				#	time.append(i)
-
-				#spline(time,information,time)
-
-				matplotlib.pyplot.plot(plotx, dVdQ,'-',label = 'Cycle ' + str(cycle-1))
-				dVdQ = []
-				dV = []
-				dQ = []
-				V = []
-				Q = []
-				plotx = []
+				window_size= max([3, round(len(V)/50) if round(len(V)/50) % 2 != 0 else round(len(V)/50)+1])
+				dVdQ, plotx = self.__differentiate__(V, Q, window_size)
+				
+				#f. plotting
+				matplotlib.pyplot.plot(plotx, dVdQ,'-',label = 'original')
+				V, Q, plotx, dVdQ = [], [], [], []
 
 				# f. plot
-				if(abs(cycle) / 10 > cur_file):
+				#if(abs(cycle) / 10 > cur_file):
 
-					print(dest + '/' + plottitle + str(cur_file) + '.png')
-					matplotlib.pyplot.legend(loc = 'upper right')
+				print(dest + '/' + plottitle + str(cur_file) + '.png')
+				matplotlib.pyplot.legend(loc = 'upper right')
 
-					cur_file = cur_file + 1
-					matplotlib.pyplot.figure(cur_file)
+				cur_file = cur_file + 1
+				matplotlib.pyplot.figure(cur_file)
 
-					matplotlib.pyplot.title(plottitle)
-					matplotlib.pyplot.xlabel(plotx_title)
-					matplotlib.pyplot.ylabel(ploty_title)
+				matplotlib.pyplot.title(plottitle)
+				matplotlib.pyplot.xlabel(plotx_title)
+				matplotlib.pyplot.ylabel(ploty_title)
 
 		# 6 . Closing the opened file
 		matplotlib.pyplot.show()
@@ -281,6 +242,7 @@ class Plot2d():
 
 		# 7. Thats all folks :) ...
 		print('6: |||||||||| 100%')
+
 
 
 
