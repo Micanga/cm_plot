@@ -1,8 +1,7 @@
 # Protocol, Plots and utils imports
-import MyGUICommons, Novonix_Protocol, BaSyTec_Protocol, Defs, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math
+import MyGUICommons, Novonix_Protocol, Defs, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math
 from MyGUICommons import exit
 from Novonix_Protocol import *
-from BaSyTec_Protocol import *
 from Defs import *
 from scipy.interpolate import spline
 from utils import *
