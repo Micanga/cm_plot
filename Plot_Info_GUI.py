@@ -9,9 +9,8 @@ from tkinter import messagebox, filedialog, StringVar
 from tkinter.font import Font
 
 # Protocol, Plots and utils imports
-import Novonix_Protocol, BaSyTec_Protocol, Plot2d, utils, re
+import Novonix_Protocol, Plot2d, utils, re
 from Novonix_Protocol import *
-from BaSyTec_Protocol import *
 from Plot2d import *
 from utils import *
 

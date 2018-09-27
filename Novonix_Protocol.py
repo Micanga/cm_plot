@@ -1,4 +1,4 @@
-import re, pathlib, Defs
+import os, re, pathlib, Defs
 from Defs import *
 from pathlib import Path
 from utils import *
@@ -15,6 +15,8 @@ DVA 		 = 11
 
 def standard_formated_name(filename):
 	part = filename.rpartition('/')
+	if(os.path.isdir(part[0] + "/form") == False):
+		os.mkdir(part[0] + "/form")
 	return part[0] + '/form/formated' + part[len(part)-1]
 
 def format(filename,prec):
@@ -58,9 +60,7 @@ def format(filename,prec):
 	cycle, tendency, prev_v = 1, 1, INF
 	line = file.readline()
 
-	print('--------------------ANTES DE ENTRAR NO WHILE')
 	while(re.match('^$', line ) is None):
-		print('DENTRO DO WHILE')
 		# i. split the data information
 		tokens = line.split(',')
 
