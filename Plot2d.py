@@ -1,8 +1,9 @@
 # Protocol, Plots and utils imports
-import MyGUICommons, Novonix_Protocol, Defs, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math
+import MyGUICommons, Novonix_Protocol, Defs, myProgressBar, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math
 from MyGUICommons import exit
 from Novonix_Protocol import *
 from Defs import *
+from myProgressBar import *
 from scipy.interpolate import spline
 from utils import *
 
@@ -263,19 +264,17 @@ class Plot2d():
 
 
 	def plot(self,filename,dest,xcol,ycol,mode,plottitle,plotx,ploty,header):
-		print('starting save - total steps: 6')
+		pb = myProgressBar('Plotting',['Opening File','Header Getting','Plot Type','Setting Labels and Information','Plot','Finishing'],40)
 
 		# 1. Opening the file
-		print('1: ',end="")
+		pb.start()
 		file = fopen(filename,'r')
-		print('|||||||||| 100%')
-		print(file)
+		pb.update(100)
 		
 		# 2. Ignoring the header
-		print('2: ',end="")
 		if(header is True):
 			file.readline()
-		print('|||||||||| 100%')
+		pb.update(100)
 
 		# 3. Verifying the plot type
 		if(COULUMBIC in [xcol,ycol]):
@@ -285,24 +284,26 @@ class Plot2d():
 		if(DVA in [xcol,ycol]):
 			self.__plotDVA__(file,dest,plottitle,'Cycle Number','dQ/dV')
 			return(None)
-			
+		pb.update(100)	
+
 		# 4. Setting plot labels and retrieving the csv information
-		print('3: ',end="")
 		matplotlib.pyplot.title(plottitle)
-		print('|||',end="")
+		pb.update(20)	
 		matplotlib.pyplot.xlabel(plotx)
-		print('||||',end="")
+		pb.update(40)	
 		matplotlib.pyplot.ylabel(ploty)
-		print('||| 100%')
+		pb.update(60)	
 		
 		information, xinformation, yinformation = [], [], []
+		pb.update(80)	
 		cycle, cur_file = 1, 1
+		pb.update(100)	
 
 		# 5. Plotting
-		print('4: Plotting... total estimate time: 15s')
 		line = file.readline()
 		matplotlib.interactive(True)
 		matplotlib.pyplot.figure(cur_file)
+		pb.update(20)
 
 		if(xcol == 4):
 			while(re.match('^$', line ) is None):
@@ -335,7 +336,6 @@ class Plot2d():
 
 				# e. plotting
 				if(abs(cycle) / 10 > cur_file):
-					print(dest + '/' + plottitle + str(cur_file) + '.png')
 					matplotlib.pyplot.legend(loc = 'upper right')
 
 					cur_file = cur_file + 1
@@ -345,10 +345,10 @@ class Plot2d():
 					matplotlib.pyplot.xlabel(plotx)
 					matplotlib.pyplot.ylabel(ploty)
 
-
+			pb.update(80)	
 			if(abs(cycle) / 10 == cur_file):
-				print(dest + '/' + plottitle + str(cur_file) + '.png')
 				matplotlib.pyplot.legend(loc = 'upper right')
+
 		elif(ycol == 4):
 			matplotlib.pyplot.xlabel(ploty)
 			matplotlib.pyplot.ylabel(plotx)
@@ -383,7 +383,6 @@ class Plot2d():
 
 				# e. plotting
 				if(abs(cycle) / 10 > cur_file):
-					print(dest + '/' + plottitle + str(cur_file) + '.png')
 					matplotlib.pyplot.legend(loc = 'upper right')
 
 					cur_file = cur_file + 1
@@ -394,9 +393,10 @@ class Plot2d():
 					matplotlib.pyplot.ylabel(plotx)
 
 
+			pb.update(80)	
 			if(abs(cycle) / 10 == cur_file):
-				print(dest + '/' + plottitle + str(cur_file) + '.png')
 				matplotlib.pyplot.legend(loc = 'upper right')
+
 		else:
 			while(re.match('^$', line ) is None):
 				# a. tokenizing line
@@ -427,7 +427,6 @@ class Plot2d():
 
 				# e. plotting
 				if(abs(cycle) / 10 > cur_file):
-					print(dest + '/' + plottitle + str(cur_file) + '.png')
 					matplotlib.pyplot.legend(loc = 'upper right')
 
 					cur_file = cur_file + 1
@@ -437,15 +436,15 @@ class Plot2d():
 					matplotlib.pyplot.xlabel(plotx)
 					matplotlib.pyplot.ylabel(ploty)
 
-
+			pb.update(80)	
 			if(abs(cycle) / 10 == cur_file):
-				print(dest + '/' + plottitle + str(cur_file) + '.png')
 				matplotlib.pyplot.legend(loc = 'upper right')
 
 		# 6 . Closing the opened file
+		pb.update(100)	
 		matplotlib.pyplot.show()
-		print('5: |||||||||| 100%')
+		pb.update(50)	
 		file.close()
+		pb.update(100)	
 
 		# 7. Thats all folks :) ...
-		print('6: |||||||||| 100%')
