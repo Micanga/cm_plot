@@ -22,7 +22,9 @@ def printAllParams(self):
 	print('Title: ' + self.Plot_Title)
 	print('Precision: ' + self.Plot_Precision)
 	print('Types: '+ str(self.Plot_XData) + str(self.Plot_YData))
-	print('Cycle: ' + str(self.Plot_Cycle))
+	print('Cycle Type: ' + str(self.Plot_Cycle_Type))
+	print('Cycles:')
+	print(self.Plot_Cycle_Number)
 
 """
 def showContacts(self):
@@ -75,6 +77,7 @@ class Finish_GUI:
 		self.charge_txt 		="| Charge button clicked         |"
 		self.discharge_txt 		="| Discharge button clicked      |"
 		self.full_txt 			="| Full button clicked           |"
+		self.cycle_number		="|--- Cycle Number not selected -|"
 
 		# 1. Saving the previous screen information
 		self.Plot_Files = prev_sc.Plot_Files
@@ -134,7 +137,7 @@ class Finish_GUI:
 		self.cont.image = contact_img
 		self.cont.place(x= 296, y= 320)
 
-		# b. Back
+		# c. Back
 		self.back_button = Button(master, anchor = 'center', compound = 'center', 
 									bg = "#%02x%02x%02x" % (30, 30, 30), fg = 'white',
 									command = self.back_button_click,image = back_button_img,
@@ -143,7 +146,7 @@ class Finish_GUI:
 		self.back_button.image = back_button_img
 		self.back_button.place(x= 535, y= 345)
 
-		# c. Finish
+		# d. Finish
 		self.finish_button = Button(master, anchor = 'center', compound = 'center', 
 									bg = "#%02x%02x%02x" % (30, 30, 30), fg = 'white',
 									command = self.finish_button_click,image = finish_button_img,
@@ -151,6 +154,30 @@ class Finish_GUI:
 									bd = 0, padx=0,pady=0,height=24,width=49)
 		self.finish_button.image = finish_button_img
 		self.finish_button.place(x= 595, y= 348)
+
+		# e. Cycle Select
+		self.cs_scroll = Scrollbar(master,orient = tkinter.VERTICAL)
+		self.cycle_select = Listbox(master,selectmode=tkinter.EXTENDED,yscrollcommand = self.cs_scroll.set,width = 5, height = 10)
+		self.cs_scroll.config(command = self.cycle_select.yview,jump=1,repeatinterval=1,relief=tkinter.FLAT)
+		if(self.Plot_Protocol == Plot_Protocol_Novonix):
+			for n_file in range(0,len(self.Plot_Files)):
+				newfilename = standard_formated_name(self.Plot_Files[n_file])
+
+				file = fopen(newfilename,'r')
+				file.readline()
+				line = file.readline()
+				cycle = 0
+				while(re.match('^$', line ) is None):
+					tokens = line.split(',')
+					line = file.readline()
+					if(abs(int(tokens[1])) > cycle):
+						cycle = abs(int(tokens[1]))
+
+				file.close()
+		for i in range(1,cycle+1):
+			self.cycle_select.insert(END,i)
+		self.cs_scroll.place(x= 600, y= 100)
+		self.cycle_select.place(x= 440, y= 100)
 
 	def charge_on(self):
 		print(self.charge_txt)
@@ -207,15 +234,22 @@ class Finish_GUI:
 			self.disableButtons()
 			myPopUp(self,' MISSING CYCLE!\n Define a Cycle Type to your Plots. ',None)
 
+		if(len(self.cycle_select.curselection()) == 0):
+			print(self.cycle_number)
+			continue_flag = False
+			self.disableButtons()
+			myPopUp(self,' MISSING CYCLES!\n Select the Cycles Numbers to your Plots. ',None)
+
 		if(continue_flag is True):
-			self.Plot_Cycle = self.charge_var.get() + self.discharge_var.get()+ self.full_var.get()
+			self.Plot_Cycle_Type = self.charge_var.get() + self.discharge_var.get()+ self.full_var.get()
+			self.Plot_Cycle_Number = self.cycle_select.curselection()
 			self.destroyWidgets()
 
 			printAllParams(self)
 			run(self)
 
-			from File_Dir_GUI import File_Dir_GUI
-			File_Dir_GUI(self.master,self,self.main_bg,self.finish_button,self.back_button)
+			from Plot_Info_GUI import Plot_Info_GUI
+			Plot_Info_GUI(self.master,self,self.main_bg,self.finish_button,self.back_button)
 
 
 
@@ -328,11 +362,12 @@ class FinishR_GUI:
 
 	def finish_button_click(self):
 		print(self.finish_button_txt)
-		self.Plot_Cycle = -1
+		self.Plot_Cycle_Type = -1
+		self.Plot_Cycle_Number = list()
 		self.destroyWidgets()
 
 		printAllParams(self)
 		run(self)
 
-		from File_Dir_GUI import File_Dir_GUI
-		File_Dir_GUI(self.master,self,self.main_bg,self.finish_button,self.back_button)
+		from Plot_Info_GUI import Plot_Info_GUI
+		Plot_Info_GUI(self.master,self,self.main_bg,self.finish_button,self.back_button)

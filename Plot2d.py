@@ -25,8 +25,8 @@ def run(info):
 	if(info.Plot_Protocol == Plot_Protocol_Novonix):
 		for n_file in range(0,len(info.Plot_Files)):
 			newfilename = standard_formated_name(info.Plot_Files[n_file])
-			Plot2d().plot(newfilename,info.Plot_Destination,info.Plot_XData+4,info.Plot_YData+4,info.Plot_Cycle,
-							info.Plot_Title,Novonix_Table[info.Plot_XData],Novonix_Table[info.Plot_YData],True)
+			Plot2d().plotNovonix(newfilename,info.Plot_Destination,info.Plot_XData+4,info.Plot_YData+4,info.Plot_Cycle_Type,info.Plot_Cycle_Number,
+							info.Plot_Title,Novonix_Table[info.Plot_XData],Novonix_Table[info.Plot_YData])
 			#else:
 			#	Plot2d().plot2y()
 
@@ -256,6 +256,60 @@ class Plot2d():
 
 
 
+	def __plotVsTime__(self,file,dest,col,mode,cycles,plottitle,plotx,ploty,pb):
+		# 1. Setting plot labels and retrieving the csv information
+		cycle, cur_file = 1, 1
+
+		matplotlib.interactive(True)
+		matplotlib.pyplot.figure(cur_file)
+		pb.update(20)	
+		matplotlib.pyplot.title(plottitle)
+		pb.update(40)	
+		matplotlib.pyplot.xlabel(plotx)
+		pb.update(60)	
+		matplotlib.pyplot.ylabel(ploty)
+		pb.update(80)
+		information = []
+		pb.update(100)	
+
+		# 2. Plotting
+		line = file.readline()
+		pb.update(20)	
+
+		while(re.match('^$', line ) is None):
+			# a. tokenizing line
+			tokens = line.split(',')
+
+			while(re.match('^$', line ) is None and cycle == abs(int(tokens[1]))):
+				# b. storing the information
+				value = float(tokens[col])
+
+				if(mode*int(tokens[1]) > 0):
+					information.append(value)
+
+				elif(mode == FULL_CYCLE):
+					information.append(value)
+
+				# c. reading the new line
+				line = file.readline()
+				tokens = line.split(',')
+
+			# d. incrementing the cycle
+			cycle = cycle + 1
+
+			if(cycle-2 in cycles):
+				matplotlib.pyplot.figure(cur_file)
+				matplotlib.pyplot.title(plottitle)
+				matplotlib.pyplot.xlabel(plotx)
+				matplotlib.pyplot.ylabel(ploty)
+				matplotlib.pyplot.plot(information,'-',label = 'Cycle ' + str(cycle-1))
+				# e. plotting
+				matplotlib.pyplot.legend(loc = 'upper right')
+				
+				# f. updating the figure
+				cur_file = cur_file + 1
+
+			information = []
 
 
 
@@ -263,7 +317,96 @@ class Plot2d():
 
 
 
-	def plot(self,filename,dest,xcol,ycol,mode,plottitle,plotx,ploty,header):
+
+
+
+
+
+
+
+
+
+
+
+
+	def __plotXY__(self,file,dest,xcol,ycol,mode,cycles,plottitle,plotx,ploty, pb):
+		# 1. Setting plot labels and retrieving the csv information
+		cycle, cur_file = 1, 1
+
+		matplotlib.interactive(True)
+		matplotlib.pyplot.figure(cur_file)
+		pb.update(20)	
+		matplotlib.pyplot.title(plottitle)
+		pb.update(40)	
+		matplotlib.pyplot.xlabel(plotx)
+		pb.update(60)	
+		matplotlib.pyplot.ylabel(ploty)
+		pb.update(80)
+		xinformation, yinformation = [], []	
+		pb.update(100)	
+
+		# 2. Plotting
+		line = file.readline()
+		pb.update(20)	
+
+		while(re.match('^$', line ) is None):
+			# a. tokenizing line
+			tokens = line.split(',')
+
+			while(re.match('^$', line ) is None and cycle == abs(int(tokens[1]))):
+				# b. storing the information
+				xvalue = float(tokens[xcol])
+				yvalue = float(tokens[ycol])
+
+				if(mode*int(tokens[1]) > 0):
+					xinformation.append(xvalue)
+					yinformation.append(yvalue)
+
+				elif(mode == FULL_CYCLE):
+					xinformation.append(xvalue)
+					yinformation.append(yvalue)
+
+				# c. reading the new line
+				line = file.readline()
+				tokens = line.split(',')
+
+			# d. incrementing the cycle
+			cycle = cycle + 1
+			
+			if(cycle-2 in cycles):
+				# e. plotting
+				matplotlib.pyplot.figure(cur_file)
+				matplotlib.pyplot.title(plottitle)
+				matplotlib.pyplot.xlabel(plotx)
+				matplotlib.pyplot.ylabel(ploty)
+				matplotlib.pyplot.plot(xinformation,yinformation,'s',label = 'Cycle ' + str(cycle-1))
+				matplotlib.pyplot.legend(loc = 'upper right')
+					
+				cur_file = cur_file + 1
+
+			xinformation, yinformation = [], []
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	def plotNovonix(self,filename,dest,xcol,ycol,mode,cycles,plottitle,plotx,ploty):
 		pb = myProgressBar('Plotting',['Opening File','Header Getting','Plot Type','Setting Labels and Information','Plot','Finishing'],40)
 
 		# 1. Opening the file
@@ -272,173 +415,34 @@ class Plot2d():
 		pb.update(100)
 		
 		# 2. Ignoring the header
-		if(header is True):
-			file.readline()
+		file.readline()
 		pb.update(100)
 
 		# 3. Verifying the plot type
 		if(COULUMBIC in [xcol,ycol]):
+			pb.update(100)
 			self.__plotColumbic__(file,dest,7,plottitle,'Cycle Number','Coulombic Efficiency (%)')
 			return(None)
 			
-		if(DVA in [xcol,ycol]):
+		elif(DVA in [xcol,ycol]):
+			pb.update(100)
 			self.__plotDVA__(file,dest,plottitle,'Cycle Number','dQ/dV')
 			return(None)
-		pb.update(100)	
 
-		# 4. Setting plot labels and retrieving the csv information
-		matplotlib.pyplot.title(plottitle)
-		pb.update(20)	
-		matplotlib.pyplot.xlabel(plotx)
-		pb.update(40)	
-		matplotlib.pyplot.ylabel(ploty)
-		pb.update(60)	
-		
-		information, xinformation, yinformation = [], [], []
-		pb.update(80)	
-		cycle, cur_file = 1, 1
-		pb.update(100)	
-
-		# 5. Plotting
-		line = file.readline()
-		matplotlib.interactive(True)
-		matplotlib.pyplot.figure(cur_file)
-		pb.update(20)
-
-		if(xcol == 4):
-			while(re.match('^$', line ) is None):
-				# a. tokenizing line
-				tokens = line.split(',')
-
-				while(re.match('^$', line ) is None and cycle == abs(int(tokens[1]))):
-					# b. storing the information
-					value = float(tokens[ycol])
-
-					if(mode*int(tokens[1]) > 0):
-						information.append(value)
-					elif(mode == FULL_CYCLE):
-						information.append(value)
-
-					# c. reading the new line
-					line = file.readline()
-					tokens = line.split(',')
-
-				# d. incrementing the cycle
-				cycle = cycle + 1
-				time = []
-
-				for i in range(1,len(information)+1):
-					time.append(i)
-
-				#spline(time,information,time)
-				matplotlib.pyplot.plot(information,'-',label = 'Cycle ' + str(cycle-1))
-				information = []
-
-				# e. plotting
-				if(abs(cycle) / 10 > cur_file):
-					matplotlib.pyplot.legend(loc = 'upper right')
-
-					cur_file = cur_file + 1
-					matplotlib.pyplot.figure(cur_file)
-
-					matplotlib.pyplot.title(plottitle)
-					matplotlib.pyplot.xlabel(plotx)
-					matplotlib.pyplot.ylabel(ploty)
-
-			pb.update(80)	
-			if(abs(cycle) / 10 == cur_file):
-				matplotlib.pyplot.legend(loc = 'upper right')
+		elif(xcol == 4):
+			pb.update(100)
+			self.__plotVsTime__(file,dest,ycol,mode,cycles,plottitle,'Cycle Number',ploty,pb)
+			pb.update(80)
 
 		elif(ycol == 4):
-			matplotlib.pyplot.xlabel(ploty)
-			matplotlib.pyplot.ylabel(plotx)
-
-			while(re.match('^$', line ) is None):
-				# a. tokenizing line
-				tokens = line.split(',')
-
-				while(re.match('^$', line ) is None and cycle == abs(int(tokens[1]))):
-					# b. storing the information
-					value = float(tokens[xcol])
-
-					if(mode*int(tokens[1]) > 0):
-						information.append(value)
-					elif(mode == FULL_CYCLE):
-						information.append(value)
-
-					# c. reading the new line
-					line = file.readline()
-					tokens = line.split(',')
-
-				# d. incrementing the cycle
-				cycle = cycle + 1
-				time = []
-
-				for i in range(1,len(information)+1):
-					time.append(i)
-
-				#spline(time,information,time)
-				matplotlib.pyplot.plot(information,'-',label = 'Cycle ' + str(cycle-1))
-				information = []
-
-				# e. plotting
-				if(abs(cycle) / 10 > cur_file):
-					matplotlib.pyplot.legend(loc = 'upper right')
-
-					cur_file = cur_file + 1
-					matplotlib.pyplot.figure(cur_file)
-
-					matplotlib.pyplot.title(plottitle)
-					matplotlib.pyplot.xlabel(ploty)
-					matplotlib.pyplot.ylabel(plotx)
-
-
-			pb.update(80)	
-			if(abs(cycle) / 10 == cur_file):
-				matplotlib.pyplot.legend(loc = 'upper right')
+			pb.update(100)
+			self.__plotVsTime__(file,dest,xcol,mode,cycles,plottitle,'Cycle Number',plotx,pb)
+			pb.update(80)
 
 		else:
-			while(re.match('^$', line ) is None):
-				# a. tokenizing line
-				tokens = line.split(',')
-
-				while(re.match('^$', line ) is None and cycle == abs(int(tokens[1]))):
-					# b. storing the information
-					xvalue = float(tokens[xcol])
-					yvalue = float(tokens[ycol])
-
-					if(mode*int(tokens[1]) > 0):
-						xinformation.append(xvalue)
-						yinformation.append(yvalue)
-					elif(mode == FULL_CYCLE):
-						xinformation.append(xvalue)
-						yinformation.append(yvalue)
-
-					# c. reading the new line
-					line = file.readline()
-					tokens = line.split(',')
-
-				# d. incrementing the cycle
-				cycle = cycle + 1
-
-				#spline(time,information,time)
-				matplotlib.pyplot.plot(xinformation,yinformation,'s',label = 'Cycle ' + str(cycle-1))
-				xinformation, yinformation = [], []
-
-				# e. plotting
-				if(abs(cycle) / 10 > cur_file):
-					matplotlib.pyplot.legend(loc = 'upper right')
-
-					cur_file = cur_file + 1
-					matplotlib.pyplot.figure(cur_file)
-
-					matplotlib.pyplot.title(plottitle)
-					matplotlib.pyplot.xlabel(plotx)
-					matplotlib.pyplot.ylabel(ploty)
-
-			pb.update(80)	
-			if(abs(cycle) / 10 == cur_file):
-				matplotlib.pyplot.legend(loc = 'upper right')
+			pb.update(100)
+			self.__plotXY__(file,dest,xcol,ycol,mode,cycles,plottitle,plotx,ploty,pb)
+			pb.update(80)
 
 		# 6 . Closing the opened file
 		pb.update(100)	
