@@ -111,6 +111,18 @@ class Finish_GUI:
 			self.back_button = bb
 			self.back_button.destroy()
 
+
+		# S. Formating the files
+		if(self.Plot_Protocol == Plot_Protocol_Novonix):
+			for n_file in range(0,len(self.Plot_Files)):
+				Novonix_Protocol.format(self.Plot_Files[n_file],self.Plot_Precision)
+		elif(self.Plot_Protocol == Plot_Protocol_BaSyTec):
+			for n_file in range(0,len(self.Plot_Files)):
+				print('BaSyTec format')
+		elif(self.Plot_Protocol == Plot_Protocol_Xanes):
+			for n_file in range(0,len(self.Plot_Files)):
+				print('Xanes format')
+
 		# 4. Setting the Functions
 		# a. Check Buttons
 		self.charge_var = IntVar()
