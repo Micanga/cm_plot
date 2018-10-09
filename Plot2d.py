@@ -9,19 +9,7 @@ from utils import *
 
 # Run Method
 def run(info):
-	# 1. Formating the files
-	if(info.Plot_Protocol == Plot_Protocol_Novonix):
-		for n_file in range(0,len(info.Plot_Files)):
-			format(info.Plot_Files[n_file],info.Plot_Precision)
-	elif(info.Plot_Protocol == Plot_Protocol_BaSyTec):
-		for n_file in range(0,len(info.Plot_Files)):
-			print('BaSyTec format')
-	elif(info.Plot_Protocol == Plot_Protocol_Xanes):
-		for n_file in range(0,len(info.Plot_Files)):
-			print('Xanes format')
-
-
-	# 2. Plotting
+	# 1. Plotting
 	if(info.Plot_Protocol == Plot_Protocol_Novonix):
 		for n_file in range(0,len(info.Plot_Files)):
 			newfilename = standard_formated_name(info.Plot_Files[n_file])
@@ -35,7 +23,7 @@ def run(info):
 	elif(info.Plot_Protocol == Plot_Protocol_Xanes):
 		print("Xanes")
 
-	# 3. That's all folks :) ...
+	# 2. That's all folks :) ...
 	exit()
 
 
