@@ -426,17 +426,17 @@ class Plot2d():
 			
 		elif(DVA in [xcol,ycol]):
 			pb.update(100)
-			self.__plotDVA__(file,dest,plottitle,'Cycle Number','dQ/dV')
+			self.__plotDVA__(file,dest,plottitle,'Capacity (A)','dQ/dV')
 			return(None)
 
 		elif(xcol == 4):
 			pb.update(100)
-			self.__plotVsTime__(file,dest,ycol,mode,cycles,plottitle,'Cycle Number',ploty,pb)
+			self.__plotVsTime__(file,dest,ycol,mode,cycles,plottitle,plotx,ploty,pb)
 			pb.update(80)
 
 		elif(ycol == 4):
 			pb.update(100)
-			self.__plotVsTime__(file,dest,xcol,mode,cycles,plottitle,'Cycle Number',plotx,pb)
+			self.__plotVsTime__(file,dest,xcol,mode,cycles,plottitle,ploty,plotx,pb)
 			pb.update(80)
 
 		else:

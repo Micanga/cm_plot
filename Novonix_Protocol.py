@@ -3,7 +3,7 @@ from Defs import *
 from pathlib import Path
 from utils import *
 
-Novonix_Table = ["Time (Data Colect Point)","Current (A)","Potential (V)","Capacity (Ah)","Temperature (C)","Circuit Temperature (C)","Coulombic Efficiency (Fg-1)/(Cycle number)","Differential Voltage Analysis (A/V)"]
+Novonix_Table = ["Time","Current (A)","Potential (V)","Capacity (Ah)","Temperature (C)","Circuit Temperature (C)","Coulombic Efficiency (Fg-1)/(Cycle number)","Differential Voltage Analysis (A/V)"]
 
 CURRENT      = 5
 POTENTIAL    = 6

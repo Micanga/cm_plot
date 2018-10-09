@@ -169,8 +169,8 @@ class Finish_GUI:
 
 		# e. Cycle Select
 		self.cs_scroll = Scrollbar(master,orient = tkinter.VERTICAL)
-		self.cycle_select = Listbox(master,selectmode=tkinter.EXTENDED,yscrollcommand = self.cs_scroll.set,width = 5, height = 10)
-		self.cs_scroll.config(command = self.cycle_select.yview,jump=1,repeatinterval=1,relief=tkinter.FLAT)
+		self.cycle_select = Listbox(master,selectmode=tkinter.EXTENDED,yscrollcommand = self.cs_scroll.set,width = 5, height = 7)
+		self.cs_scroll.config(command = self.cycle_select.yview,relief=tkinter.FLAT)
 		if(self.Plot_Protocol == Plot_Protocol_Novonix):
 			for n_file in range(0,len(self.Plot_Files)):
 				newfilename = standard_formated_name(self.Plot_Files[n_file])
@@ -188,8 +188,8 @@ class Finish_GUI:
 				file.close()
 		for i in range(1,cycle+1):
 			self.cycle_select.insert(END,i)
-		self.cs_scroll.place(x= 600, y= 100)
-		self.cycle_select.place(x= 440, y= 100)
+		self.cycle_select.place(bordermode=tkinter.OUTSIDE,x= 483, y= 130,height=120,width=50)
+		self.cs_scroll.place(bordermode=tkinter.OUTSIDE,x= 535, y= 130,height=120,width=15)
 
 	def charge_on(self):
 		print(self.charge_txt)
