@@ -160,7 +160,7 @@ class Plot2d():
 
 		return dVdQ_gaus
 
-	def __plotDVA__(self,file,dest,plottitle,plotx_title,ploty_title):
+	def __plotDVA__(self,file,dest,plottitle,plotx_title,ploty_title,cycles):
 		print('DVA')
 		cycle_test = 1
 		
@@ -208,7 +208,6 @@ class Plot2d():
 
 			# d. incrementing the cycle
 			cycle = cycle + 1
-			time = []
 
 			#Test if the vector Q and V are not empty
 			if(len(Q) > 3 and len(V) > 3 and any([t != Q[0] for t in Q]) ):
@@ -216,23 +215,23 @@ class Plot2d():
 				plotx = []
 				window_size= max([3, round(len(V)/50) if round(len(V)/50) % 2 != 0 else round(len(V)/50)+1])
 				dVdQ = self.__differentiate__(V, Q)
-				
-				#f. plotting
-				matplotlib.pyplot.plot(Q[1:len(Q)], dVdQ,'-',label = 'original')
-				V, Q, plotx, dVdQ = [], [], [], []
 
 				# f. plot
 				#if(abs(cycle) / 10 > cur_file):
 
-				print(dest + '/' + plottitle + str(cur_file) + '.png')
-				matplotlib.pyplot.legend(loc = 'upper right')
+				if(cycle-2 in cycles):
+					# e. plotting
+					matplotlib.pyplot.figure(cur_file)
+					matplotlib.pyplot.title(plottitle)
+					matplotlib.pyplot.xlabel(plotx_title)
+					matplotlib.pyplot.ylabel(ploty_title)
+					matplotlib.pyplot.plot(Q[1:len(Q)], dVdQ,'-o',label = 'Cycle ' + str(cycle-1))
+					matplotlib.pyplot.legend(loc = 'upper right')
+						
+					cur_file = cur_file + 1
 
-				cur_file = cur_file + 1
-				matplotlib.pyplot.figure(cur_file)
 
-				matplotlib.pyplot.title(plottitle)
-				matplotlib.pyplot.xlabel(plotx_title)
-				matplotlib.pyplot.ylabel(ploty_title)
+				V, Q, plotx, dVdQ = [], [], [], []
 
 		# 6 . Closing the opened file
 		matplotlib.pyplot.show()
@@ -425,7 +424,7 @@ class Plot2d():
 			
 		elif(DVA in [xcol,ycol]):
 			pb.update(100)
-			self.__plotDVA__(file,dest,plottitle,'Capacity (A)','dQ/dV')
+			self.__plotDVA__(file,dest,plottitle,'Capacity (A)','dQ/dV',cycles)
 			return(None)
 
 		elif(xcol == 4):

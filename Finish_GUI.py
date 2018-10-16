@@ -304,7 +304,7 @@ class FinishR_GUI:
 		print(self.start_log)
 
 		# 2. Oppening the imgs
-		bg_img = tkinter.PhotoImage(file='img/screen3_2.png')
+		bg_img = tkinter.PhotoImage(file='img/screen3_3.png')
 		contact_img = tkinter.PhotoImage(file='img/contact.png')
 		back_button_img = tkinter.PhotoImage(file='img/back_button.png')
 		finish_button_img = tkinter.PhotoImage(file='img/finish.png')
@@ -350,6 +350,30 @@ class FinishR_GUI:
 		self.finish_button.image = finish_button_img
 		self.finish_button.place(x= 595, y= 348)
 
+		# d. Cycle Select
+		self.cs_scroll = Scrollbar(master,orient = tkinter.VERTICAL)
+		self.cycle_select = Listbox(master,selectmode=tkinter.EXTENDED,yscrollcommand = self.cs_scroll.set,width = 5, height = 7)
+		self.cs_scroll.config(command = self.cycle_select.yview,relief=tkinter.FLAT)
+		if(self.Plot_Protocol == Plot_Protocol_Novonix):
+			for n_file in range(0,len(self.Plot_Files)):
+				newfilename = standard_formated_name(self.Plot_Files[n_file])
+
+				file = fopen(newfilename,'r')
+				file.readline()
+				line = file.readline()
+				cycle = 0
+				while(re.match('^$', line ) is None):
+					tokens = line.split(',')
+					line = file.readline()
+					if(abs(int(tokens[1])) > cycle):
+						cycle = abs(int(tokens[1]))
+
+				file.close()
+		for i in range(1,cycle+1):
+			self.cycle_select.insert(END,i)
+		self.cycle_select.place(bordermode=tkinter.OUTSIDE,x= 483, y= 130,height=120,width=50)
+		self.cs_scroll.place(bordermode=tkinter.OUTSIDE,x= 535, y= 130,height=120,width=15)
+
 
 	def ableButtons(self):
 		self.cont.configure(state="normal")
@@ -375,7 +399,7 @@ class FinishR_GUI:
 	def finish_button_click(self):
 		print(self.finish_button_txt)
 		self.Plot_Cycle_Type = -1
-		self.Plot_Cycle_Number = list()
+		self.Plot_Cycle_Number = self.cycle_select.curselection()
 		self.destroyWidgets()
 
 		printAllParams(self)
