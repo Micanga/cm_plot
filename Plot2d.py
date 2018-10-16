@@ -1,5 +1,5 @@
 # Protocol, Plots and utils imports
-import MyGUICommons, Novonix_Protocol, Defs, myProgressBar, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math
+import MyGUICommons, Novonix_Protocol, Defs, myProgressBar, utils, re, csv, numpy, matplotlib.pyplot, scipy.interpolate, math, pandas, scipy.signal
 from MyGUICommons import exit
 from Novonix_Protocol import *
 from Defs import *
@@ -139,15 +139,26 @@ class Plot2d():
 		elif cond == 'b':
 			return self.__average__(V[window-math.ceil(window/2):window+math.ceil(window/2)], window) - self.__average__(V[:window-1], window)
 
-	def __differentiate__(self, V, Q, window):
+	def __differentiate__(self, V, Q):
 		dVdQ = []
 		plotx = []
+		V = pandas.Series(V)
+		Q = pandas.Series(Q)
+		# Applies a moving average filter
+		V_smooth = pandas.Series.rolling(V, 1).mean() 
+		Q_smooth = pandas.Series.rolling(Q, 1).mean()
 
-		for i in range(window, len(V)-window-1, window):
-			dVdQ.append(((self.__delta__(V[i-window:i+window+1], 'f', window)/self.__delta__(Q[i-window:i+window+1], 'f', window)) + (self.__delta__(V[i-window:i+window+1], 'b', window)/self.__delta__(Q[i-window:i+window+1],'b', window)))*(1/2))
-			plotx.append(Q[i])
+		#differentiting
+		dV = numpy.diff(V)
+		dQ = numpy.diff(Q)
+		dVdQ = dV/dQ
 
-		return dVdQ, plotx
+		#applies a gaussian filter and a convolution 
+		g = scipy.signal.gaussian(min(40, len(Q)-1), 2.5)
+		g = g/sum(g)
+		dVdQ_gaus = numpy.convolve(dVdQ, g, mode='same')
+
+		return dVdQ_gaus
 
 	def __plotDVA__(self,file,dest,plottitle,plotx_title,ploty_title):
 		print('DVA')
@@ -187,7 +198,7 @@ class Plot2d():
 				valueV = float(tokens[6]) #potencial
 
 				
-				if(int(tokens[1]) < 0 and valueQ != 0 and valueV != 0):
+				if(int(tokens[1]) > 0 and valueQ != 0 and valueV != 0):
 					Q.append(valueQ)
 					V.append(valueV)
 
@@ -204,10 +215,10 @@ class Plot2d():
 				# e. Differentiating dQ/dV
 				plotx = []
 				window_size= max([3, round(len(V)/50) if round(len(V)/50) % 2 != 0 else round(len(V)/50)+1])
-				dVdQ, plotx = self.__differentiate__(V, Q, window_size)
+				dVdQ = self.__differentiate__(V, Q)
 				
 				#f. plotting
-				matplotlib.pyplot.plot(plotx, dVdQ,'-',label = 'original')
+				matplotlib.pyplot.plot(Q[1:len(Q)], dVdQ,'-',label = 'original')
 				V, Q, plotx, dVdQ = [], [], [], []
 
 				# f. plot
